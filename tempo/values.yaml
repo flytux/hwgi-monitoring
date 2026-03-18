@@ -1,0 +1,27 @@
+# -- Define the amount of instances
+replicas: 1
+
+persistence:
+  enabled: true
+  storageClassName: local-path
+  accessModes:
+    - ReadWriteOnce
+  size: 10Gi
+
+tempo:
+  metricsGenerator:
+    enabled: true
+    remoteWriteUrl: "http://prometheus-server.monitoring.svc.cluster.local:80/api/v1/write"
+    processor: 
+      service_graphs: {}
+      span_metrics: {}
+      local_blocks: {}
+    traces_storage:
+      path: "/tmp/traces"
+  overrides:
+    defaults: 
+      metrics_generator:
+        processors:
+          - service-graphs
+          - span-metrics
+          - local-blocks

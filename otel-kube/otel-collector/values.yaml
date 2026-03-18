@@ -1,0 +1,105 @@
+mode: daemonset
+
+service:
+  enabled: true
+
+presets:
+  logsCollection:
+    enabled: false
+    includeCollectorLogs: false
+    storeCheckpoints: false
+    maxRecombineLogSize: 102400
+  hostMetrics:
+    enabled: true
+  kubernetesAttributes:
+    enabled: true
+    extractAllPodLabels: true
+    extractAllPodAnnotations: true
+  kubeletMetrics:
+    enabled: true
+  kubernetesEvents:
+    enabled: true
+  clusterMetrics:
+    enabled: true
+  annotationDiscovery:
+    logs:
+      enabled: false
+    metrics:
+      enabled: true
+
+config:
+  exporters:
+    debug: {}
+    otlphttp/metrics:
+      endpoint: http://prometheus-server.monitoring.svc.cluster.local:80/api/v1/otlp
+    otlphttp/traces:
+      endpoint: http://tempo.monitoring.svc.cluster.local:4318
+      tls:
+        insecure: true
+    otlphttp/logs:
+      endpoint: http://loki-gateway.monitoring.svc.cluster.local/otlp
+      tls:
+        insecure: true
+    debug/metrics:
+      verbosity: detailed
+    debug/traces:
+      verbosity: detailed
+    debug/logs:
+      verbosity: detailed
+  extensions:
+    health_check:
+      endpoint: ${env:MY_POD_IP}:13133
+  processors:
+    batch: {}
+    memory_limiter:
+      check_interval: 5s
+      limit_percentage: 80
+      spike_limit_percentage: 25
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: ${env:MY_POD_IP}:4317
+        http:
+          endpoint: ${env:MY_POD_IP}:4318
+  service:
+    extensions:
+      - health_check
+    pipelines:
+      logs:
+        exporters:
+          - debug
+          - otlphttp/logs
+        processors:
+          - memory_limiter
+          - batch
+        receivers:
+          - otlp
+      metrics:
+        exporters:
+          - debug
+          - otlphttp/metrics
+        processors:
+          - memory_limiter
+          - batch
+        receivers:
+          - otlp
+      traces:
+        exporters:
+          - debug
+          - otlphttp/traces
+        processors:
+          - memory_limiter
+          - batch
+        receivers:
+          - otlp
+
+image:
+  repository: "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-k8s"
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+command:
+  name: "otelcol-k8s"
+  extraArgs: []
+
