@@ -1,12 +1,11 @@
-image:
-  repository: grafana/mimir
-  tag: 3.0.1
-  pullPolicy: IfNotPresent
-
 global:
   dnsService: rke2-coredns-rke2-coredns
 
 mimir:
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/grafana-mimir
+
   config: |
     usage_stats:
       installation_mode: helm
@@ -20,7 +19,7 @@ mimir:
       external_url: /alertmanager
       {{- if .Values.alertmanager.zoneAwareReplication.enabled }}
       sharding_ring:
-        zone_awareness_enabled: false
+        zone_awareness_enabled: true
       {{- end }}
       {{- if .Values.alertmanager.fallbackConfig }}
       fallback_config_file: /configs/alertmanager_fallback_config.yaml
@@ -228,62 +227,99 @@ mimir:
         zone_awareness_enabled: true
         {{- end }}
 
-
-alertmanager:
-  enabled: false
-
-distributor:
-  enabled: true
-
 ingester:
   enabled: true
+  replicas: 3
+  zoneAwareReplication:
+    enabled: false
+  resources:
+    requests:
+      cpu: 20m
 
 overrides_exporter:
-  enabled: true
-
-ruler:
   enabled: false
+
+ruler_querier:
+  replicas: 1
+# -- Only deployed if .Values.ruler.remoteEvaluationDedicatedQueryPath
 
 querier:
   enabled: true
-  replicas: 2
+  replicas: 1
+  resources:
+    requests:
+      cpu: 20m
 
 query_frontend:
   enabled: true
+  replicas: 1
+  resources:
+    requests:
+      cpu: 20m
 
 query_scheduler:
   enabled: true
+  replicas: 1
+  resources:
+    requests:
+      cpu: 20m
 
 store_gateway:
   enabled: false
+  replicas: 1
 
 compactor:
   enabled: true
-
-memcachedExporter:
-  enabled: true
-
-minio:
-  enabled: true
-  mode: standalone
-  rootUser: grafana-mimir
-  buckets:
-    - name: mimir-tsdb
-      policy: none
-      purge: false
-    - name: mimir-ruler
-      policy: none
-      purge: false
-  persistence:
-    size: 5Gi
   resources:
     requests:
-      cpu: 100m
-      memory: 128Mi
-  rootPassword: supersecret
+      cpu: 20m
+
+memcachedExporter:
+  enabled: false
+
+chunks-cache:
+  enabled: false
+
+index-cache:
+  enabled: false
+
+results-cache:
+  enabled: false
 
 kafka:
   enabled: false
 
+ingress:
+  enabled: true
+  ingressClassName: nginx
+  hosts:
+    - mimir.node-01
+
 gateway:
   enabled: true
+  image:
+    repository: bitnamilegacy/nginx
+
+memcachedchunks:
+  image:
+    repository: bitnamilegacy/memcached
+
+memcachedfrontend:
+  image:
+    repository: bitnamilegacy/memcached
+
+memcachedindex:
+  image:
+    repository: bitnamilegacy/memcached
+
+memcachedmetadata:
+  image:
+    repository: bitnamilegacy/memcached
+
+minio:
+  image:
+    repository: bitnamilegacy/minio
+  defaultInitContainers:
+    volumePermissions:
+      image:
+        repository: bitnamilegacy/os-shell
