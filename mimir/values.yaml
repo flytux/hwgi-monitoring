@@ -239,10 +239,10 @@ ingester:
   enabled: true
 
 overrides_exporter:
-  enabled: true
+  enabled: false
 
 ruler:
-  enabled: true
+  enabled: false
 
 querier:
   enabled: true
@@ -255,13 +255,13 @@ query_scheduler:
   enabled: true
 
 store_gateway:
-  enabled: true
+  enabled: false
 
 compactor:
-  enabled: true
+  enabled: false
 
 memcachedExporter:
-  enabled: true
+  enabled: false
 
 minio:
   enabled: true

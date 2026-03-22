@@ -1,18 +1,19 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: book-info
-  namespace: sample
+  name: grafana
+  namespace: vms
 spec:
   ingressClassName: nginx
   rules:
-  - host: bookinfo.node-02
+  - host: grafana.kw-home
     http:
       paths:
       - backend:
           service:
-            name: productpage
+            name: vm-stack-grafana
             port:
-              number: 9080
+              number: 80
         path: /
         pathType: Prefix
+
